@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2-5 분실물 게시판</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F3EE;
+    --surface: #FFFFFF;
+    --surface2: #EEECE6;
+    --border: #D8D4C8;
+    --text: #1A1916;
+    --text2: #6B6760;
+    --text3: #A09C94;
+    --accent: #E8450A;
+    --accent2: #F5A623;
+    --accent3: #2D6A4F;
+    --tag-bg: #1A1916;
+    --tag-text: #F5F3EE;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+    --shadow-hover: 0 8px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 1.5px solid var(--border);
+    padding: 0 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+  }
+
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-title .class-badge {
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .header-title h1 {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    transition: background 0.15s;
+    position: relative;
+  }
+  .icon-btn:hover { background: var(--surface2); }
+  .icon-btn svg { width: 20px; height: 20px; }
+
+  .notif-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 7px;
+    height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    border: 1.5px solid var(--surface);
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+  }
+  .stats-bar span { opacity: 0.6; }
+  .stats-bar strong { opacity: 1; }
+
+  /* Category tabs */
+  .category-scroll {
+    background: var(--surface);
+    border-bottom: 1.5px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .category-scroll::-webkit-scrollbar { display: none; }
+
+  .cat-tab {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: none;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .cat-tab:hover { border-color: var(--text); color: var(--text); }
+  .cat-tab.active {
+    background: var(--tag-bg);
+    border-color: var(--tag-bg);
+    color: var(--tag-text);
+  }
+
+  /* Main content */
+  .main { padding: 12px 16px; }
+
+  /* Section header */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-family: 'Space Mono', monospace;
+  }
+  .count-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  /* Post card */
+  .post-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .post-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .post-card:hover {
+    border-color: var(--text);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  .post-card.resolved {
+    opacity: 0.5;
+  }
+  .post-card.resolved .post-title {
+    text-decoration: line-through;
+  }
+
+  .post-img-area {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    background: var(--surface2);
+    flex-shrink: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    border: 1px solid var(--border);
+  }
+  .post-img-area img { width: 100%; height: 100%; object-fit: cover; }
+
+  .post-content { flex: 1; min-width: 0; }
+
+  .post-tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 5px;
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+  }
+  .tag-cat {
+    background: var(--tag-bg);
+    color: var(--tag-text);
+  }
+  .tag-found {
+    background: #2D6A4F;
+    color: white;
+  }
+  .tag-lost {
+    background: #C0392B;
+    color: white;
+  }
+
+  .post-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.4;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .post-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'Space Mono', monospace;
+  }
+  .post-meta .author { color: var(--text2); font-weight: 700; }
+  .post-meta .sep { color: var(--border); }
+
+  .post-preview {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* FAB */
+  .fab {
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    width: 52px;
+    height: 52px;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    transition: all 0.2s;
+    z-index: 90;
+  }
+  .fab:hover { transform: scale(1.08); background: #333; }
+  .fab svg { width: 22px; height: 22px; }
+
+  /* ===== MODAL BASE ===== */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+
+  .modal-sheet {
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-width: 520px;
+    max-height: 92vh;
+    overflow-y: auto;
+    padding: 0 0 32px;
+    animation: slideUp 0.25s cubic-bezier(0.32,0.72,0,1);
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-handle {
+    display: flex;
+    justify-content: center;
+    padding: 12px 0 8px;
+  }
+  .modal-handle div {
+    width: 36px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 16px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-title {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  .close-btn {
+    width: 32px; height: 32px;
+    border: none; background: var(--surface2);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text2);
+    font-size: 16px;
+    transition: background 0.15s;
+  }
+  .close-btn:hover { background: var(--border); }
+
+  /* ===== WRITE MODAL ===== */
+  .write-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+  .form-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 6px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .form-group { display: flex; flex-direction: column; }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+
+  .cat-option {
+    padding: 10px 6px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: none;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .cat-option .cat-emoji { font-size: 20px; display: block; margin-bottom: 3px; }
+  .cat-option .cat-name { font-size: 11px; font-weight: 500; color: var(--text2); }
+  .cat-option:hover { border-color: var(--text); }
+  .cat-option.selected {
+    border-color: var(--tag-bg);
+    background: var(--tag-bg);
+  }
+  .cat-option.selected .cat-name { color: var(--tag-text); }
+
+  .text-input, .textarea-input {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  .text-input:focus, .textarea-input:focus { border-color: var(--text); }
+  .textarea-input { resize: none; min-height: 80px; line-height: 1.5; }
+
+  .media-btns {
+    display: flex;
+    gap: 8px;
+  }
+
+  .media-btn {
+    flex: 1;
+    padding: 10px;
+    border: 1.5px dashed var(--border);
+    border-radius: 10px;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px;
+    color: var(--text2);
+    transition: all 0.15s;
+  }
+  .media-btn:hover { border-color: var(--text); color: var(--text); background: var(--surface2); }
+  .media-btn svg { width: 16px; height: 16px; }
+
+  .image-preview-list {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .image-preview-item {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border);
+  }
+  .image-preview-item img { width: 100%; height: 100%; object-fit: cover; }
+  .image-preview-item .remove-img {
+    position: absolute;
+    top: 2px; right: 2px;
+    width: 18px; height: 18px;
+    background: rgba(0,0,0,0.6);
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    color: white;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    border: none;
+    border-radius: 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-top: 4px;
+  }
+  .submit-btn:hover { background: #333; }
+  .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ===== DETAIL MODAL ===== */
+  .detail-img {
+    width: 100%;
+    max-height: 260px;
+    object-fit: cover;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+  }
+  .detail-img-placeholder {
+    width: 100%;
+    height: 180px;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 56px;
+  }
+  .detail-body { padding: 16px; }
+  .detail-tags { display: flex; gap: 6px; margin-bottom: 10px; }
+  .detail-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.3; margin-bottom: 8px; }
+  .detail-meta { font-size: 12px; color: var(--text3); font-family: 'Space Mono', monospace; margin-bottom: 12px; }
+  .detail-meta strong { color: var(--text2); }
+  .detail-desc {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text2);
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .detail-img-gallery {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .detail-img-gallery img {
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+    cursor: pointer;
+    border: 1px solid var(--border);
+  }
+
+  .resolve-btn {
+    width: 100%;
+    padding: 13px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: none;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--accent3);
+    border-color: var(--accent3);
+    transition: all 0.15s;
+  }
+  .resolve-btn:hover { background: var(--accent3); color: white; }
+  .resolve-btn.resolved-state { color: var(--text3); border-color: var(--border); }
+  .resolve-btn.resolved-state:hover { background: var(--surface2); color: var(--text3); }
+
+  /* ===== NOTIFICATION MODAL ===== */
+  .notif-body { padding: 12px 16px 0; }
+  .notif-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .notif-item:hover { opacity: 0.7; }
+  .notif-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .notif-text { flex: 1; }
+  .notif-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; line-height: 1.4; }
+  .notif-sub { font-size: 11px; color: var(--text3); font-family: 'Space Mono', monospace; }
+  .notif-new .notif-icon { background: #FFF3CD; }
+
+  /* ===== CATEGORY PAGE ===== */
+  .cat-page {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    z-index: 150;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .cat-page.show { display: flex; }
+
+  .cat-page-header {
+    background: var(--surface);
+    border-bottom: 1.5px solid var(--border);
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 56px;
+    flex-shrink: 0;
+  }
+  .back-btn {
+    width: 36px; height: 36px;
+    border: none; background: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    color: var(--text);
+    transition: background 0.15s;
+  }
+  .back-btn:hover { background: var(--surface2); }
+  .back-btn svg { width: 20px; height: 20px; }
+
+  .cat-page-title { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; flex: 1; }
+
+  .cat-page-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+  }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text3);
+  }
+  .empty-state div { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; line-height: 1.6; }
+
+  /* Input hidden */
+  input[type="file"] { display: none; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 300;
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-title">
+    <span class="class-badge">2-5</span>
+    <h1>분실물 게시판</h1>
+  </div>
+  <div class="header-actions">
+    <button class="icon-btn" onclick="openNotif()" title="알림">
+      <div class="notif-dot" id="notifDot"></div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<!-- Stats -->
+<div class="stats-bar">
+  <span>전체</span><strong id="totalCount">0</strong>
+  <span>|</span>
+  <span>미해결</span><strong id="unresolvedCount">0</strong>
+  <span>|</span>
+  <span>해결</span><strong id="resolvedCount">0</strong>
+</div>
+
+<!-- Category tabs -->
+<div class="category-scroll">
+  <button class="cat-tab active" onclick="filterCategory('all', this)">전체</button>
+  <button class="cat-tab" onclick="filterCategory('필기구', this)">✏️ 필기구</button>
+  <button class="cat-tab" onclick="filterCategory('문구류', this)">📎 문구류</button>
+  <button class="cat-tab" onclick="filterCategory('텀블러', this)">🧃 텀블러</button>
+  <button class="cat-tab" onclick="filterCategory('안경', this)">👓 안경</button>
+  <button class="cat-tab" onclick="filterCategory('전자기기', this)">🔌 전자기기</button>
+  <button class="cat-tab" onclick="filterCategory('기타', this)">📦 기타</button>
+</div>
+
+<!-- Main -->
+<main class="main">
+  <div class="section-header">
+    <span class="section-title" id="currentCatLabel">ALL</span>
+    <span class="count-badge" id="listCount">0건</span>
+  </div>
+  <div class="post-list" id="postList"></div>
+  <div class="empty-state" id="emptyState" style="display:none">
+    <div>🔍</div>
+    <p>게시물이 없습니다.<br>분실물을 등록해보세요!</p>
+  </div>
+</main>
+
+<!-- FAB -->
+<button class="fab" onclick="openWrite()" title="글쓰기">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19"/>
+    <line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+</button>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ===== WRITE MODAL ===== -->
+<div class="modal-overlay" id="writeModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"><div></div></div>
+    <div class="modal-header">
+      <span class="modal-title">분실물 등록</span>
+      <button class="close-btn" onclick="closeWrite()">✕</button>
+    </div>
+    <div class="write-body">
+
+      <!-- Author -->
+      <div class="form-group">
+        <div class="form-label">작성자</div>
+        <input class="text-input" id="writeAuthor" placeholder="이름을 입력하세요" maxlength="10">
+      </div>
+
+      <!-- Category -->
+      <div class="form-group">
+        <div class="form-label">카테고리</div>
+        <div class="cat-grid">
+          <button class="cat-option" onclick="selectCat(this, '필기구')">
+            <span class="cat-emoji">✏️</span>
+            <span class="cat-name">필기구</span>
+          </button>
+          <button class="cat-option" onclick="selectCat(this, '문구류')">
+            <span class="cat-emoji">📎</span>
+            <span class="cat-name">문구류</span>
+          </button>
+          <button class="cat-option" onclick="selectCat(this, '텀블러')">
+            <span class="cat-emoji">🧃</span>
+            <span class="cat-name">텀블러</span>
+          </button>
+          <button class="cat-option" onclick="selectCat(this, '안경')">
+            <span class="cat-emoji">👓</span>
+            <span class="cat-name">안경</span>
+          </button>
+          <button class="cat-option" onclick="selectCat(this, '전자기기')">
+            <span class="cat-emoji">🔌</span>
+            <span class="cat-name">전자기기</span>
+          </button>
+          <button class="cat-option" onclick="selectCat(this, '기타')">
+            <span class="cat-emoji">📦</span>
+            <span class="cat-name">기타</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Title -->
+      <div class="form-group">
+        <div class="form-label">제목</div>
+        <input class="text-input" id="writeTitle" placeholder="ex) 파란색 샤프 잃어버렸어요" maxlength="50">
+      </div>
+
+      <!-- Description -->
+      <div class="form-group">
+        <div class="form-label">내용 <span style="font-weight:400;opacity:.6">(선택)</span></div>
+        <textarea class="textarea-input" id="writeDesc" placeholder="언제 어디서 잃어버렸는지, 특징 등 자세히 적어주세요.&#10;이유 없이도 대충 강 글 쓸 수 있어요!" rows="3"></textarea>
+      </div>
+
+      <!-- Media -->
+      <div class="form-group">
+        <div class="form-label">사진 / 파일 <span style="font-weight:400;opacity:.6">(선택)</span></div>
+        <div class="media-btns">
+          <button class="media-btn" onclick="document.getElementById('imgInput').click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            사진 첨부
+          </button>
+          <button class="media-btn" onclick="document.getElementById('fileInput').click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
+            파일 첨부
+          </button>
+        </div>
+        <div class="image-preview-list" id="imagePreviewList"></div>
+        <div id="fileNameList" style="margin-top:6px;font-size:12px;color:var(--text2);"></div>
+        <input type="file" id="imgInput" accept="image/*" multiple onchange="handleImages(this)">
+        <input type="file" id="fileInput" multiple onchange="handleFiles(this)">
+      </div>
+
+      <button class="submit-btn" id="submitBtn" onclick="submitPost()">등록하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DETAIL MODAL ===== -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"><div></div></div>
+    <div class="modal-header">
+      <span class="modal-title" id="detailCatLabel">상세보기</span>
+      <button class="close-btn" onclick="closeDetail()">✕</button>
+    </div>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<!-- ===== NOTIF MODAL ===== -->
+<div class="modal-overlay" id="notifModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"><div></div></div>
+    <div class="modal-header">
+      <span class="modal-title">🔔 알림 / 최근 업데이트</span>
+      <button class="close-btn" onclick="closeNotif()">✕</button>
+    </div>
+    <div class="notif-body" id="notifList"></div>
+  </div>
+</div>
+
+<!-- ===== CATEGORY PAGE ===== -->
+<div class="cat-page" id="catPage">
+  <div class="cat-page-header">
+    <button class="back-btn" onclick="closeCatPage()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
+    <span class="cat-page-title" id="catPageTitle"></span>
+  </div>
+  <div class="cat-page-body">
+    <div class="post-list" id="catPostList"></div>
+    <div class="empty-state" id="catEmptyState" style="display:none">
+      <div>📭</div>
+      <p>이 카테고리에 게시물이 없어요.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+let posts = JSON.parse(localStorage.getItem('lostfound_posts') || '[]');
+let selectedCat = '';
+let selectedImages = [];
+let attachedFiles = [];
+let currentFilter = 'all';
+
+const CAT_EMOJI = {
+  '필기구': '✏️', '문구류': '📎', '텀블러': '🧃',
+  '안경': '👓', '전자기기': '🔌', '기타': '📦'
+};
+
+// ===== SAMPLE DATA (first run) =====
+if (posts.length === 0) {
+  posts = [];
+  savePosts();
+}
+
+function savePosts() {
+  // Store posts without base64 images (size limit)
+  const toSave = posts.map(p => ({ ...p, images: [] }));
+  try { localStorage.setItem('lostfound_posts', JSON.stringify(toSave)); } catch(e) {}
+}
+
+function formatDate(ts) {
+  const d = new Date(ts);
+  return `${String(d.getFullYear()).slice(2)}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ===== RENDER =====
+function renderList(filter) {
+  currentFilter = filter;
+  let filtered = filter === 'all' ? posts : posts.filter(p => p.cat === filter);
+  // Sort: unresolved first, then by date desc
+  filtered = [...filtered].sort((a,b) => {
+    if (a.resolved !== b.resolved) return a.resolved ? 1 : -1;
+    return b.ts - a.ts;
+  });
+
+  const list = document.getElementById('postList');
+  const empty = document.getElementById('emptyState');
+  const label = document.getElementById('currentCatLabel');
+  const cnt = document.getElementById('listCount');
+
+  label.textContent = filter === 'all' ? 'ALL' : filter.toUpperCase();
+  cnt.textContent = filtered.length + '건';
+
+  list.innerHTML = '';
+  if (filtered.length === 0) { empty.style.display = ''; return; }
+  empty.style.display = 'none';
+
+  filtered.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'post-card' + (p.resolved ? ' resolved' : '');
+    card.onclick = () => openDetail(p.id);
+    const imgHtml = p.images && p.images.length > 0
+      ? `<div class="post-img-area"><img src="${p.images[0]}" alt=""></div>`
+      : `<div class="post-img-area">${CAT_EMOJI[p.cat] || '📦'}</div>`;
+    card.innerHTML = `
+      ${imgHtml}
+      <div class="post-content">
+        <div class="post-tags">
+          <span class="tag tag-cat">${CAT_EMOJI[p.cat] || ''} ${p.cat}</span>
+          ${p.resolved ? '<span class="tag tag-found">✓ 해결</span>' : '<span class="tag tag-lost">미해결</span>'}
+        </div>
+        <div class="post-title">${escHtml(p.title)}</div>
+        <div class="post-meta">
+          <span class="author">${escHtml(p.author)}</span>
+          <span class="sep">·</span>
+          <span>${p.date}</span>
+        </div>
+        ${p.desc ? `<div class="post-preview">${escHtml(p.desc)}</div>` : ''}
+      </div>
+    `;
+    list.appendChild(card);
+  });
+
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('totalCount').textContent = posts.length;
+  document.getElementById('unresolvedCount').textContent = posts.filter(p=>!p.resolved).length;
+  document.getElementById('resolvedCount').textContent = posts.filter(p=>p.resolved).length;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ===== FILTER =====
+function filterCategory(cat, btn) {
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderList(cat);
+}
+
+// ===== WRITE =====
+function openWrite() {
+  document.getElementById('writeModal').classList.add('show');
+  document.getElementById('writeAuthor').focus();
+}
+function closeWrite() {
+  document.getElementById('writeModal').classList.remove('show');
+  resetWriteForm();
+}
+
+function selectCat(btn, cat) {
+  document.querySelectorAll('.cat-option').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedCat = cat;
+}
+
+function handleImages(input) {
+  const files = Array.from(input.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      selectedImages.push(e.target.result);
+      renderImagePreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function handleFiles(input) {
+  attachedFiles = [...attachedFiles, ...Array.from(input.files)];
+  renderFileList();
+  input.value = '';
+}
+
+function renderImagePreviews() {
+  const list = document.getElementById('imagePreviewList');
+  list.innerHTML = selectedImages.map((src, i) => `
+    <div class="image-preview-item">
+      <img src="${src}" alt="">
+      <button class="remove-img" onclick="removeImg(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeImg(i) {
+  selectedImages.splice(i, 1);
+  renderImagePreviews();
+}
+
+function renderFileList() {
+  const el = document.getElementById('fileNameList');
+  if (attachedFiles.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = '📎 ' + attachedFiles.map(f => escHtml(f.name)).join(', ');
+}
+
+function resetWriteForm() {
+  document.getElementById('writeAuthor').value = '';
+  document.getElementById('writeTitle').value = '';
+  document.getElementById('writeDesc').value = '';
+  document.querySelectorAll('.cat-option').forEach(b => b.classList.remove('selected'));
+  selectedCat = '';
+  selectedImages = [];
+  attachedFiles = [];
+  renderImagePreviews();
+  renderFileList();
+}
+
+function submitPost() {
+  const author = document.getElementById('writeAuthor').value.trim();
+  const title = document.getElementById('writeTitle').value.trim();
+  const desc = document.getElementById('writeDesc').value.trim();
+
+  if (!author) { showToast('이름을 입력해주세요!'); return; }
+  if (!selectedCat) { showToast('카테고리를 선택해주세요!'); return; }
+  if (!title) { showToast('제목을 입력해주세요!'); return; }
+
+  const now = Date.now();
+  const post = {
+    id: now,
+    author, cat: selectedCat, title, desc,
+    date: formatDate(now),
+    images: [...selectedImages],
+    files: attachedFiles.map(f => f.name),
+    resolved: false,
+    ts: now
+  };
+  posts.unshift(post);
+  savePosts();
+  closeWrite();
+  renderList(currentFilter);
+  showToast('등록되었습니다!');
+}
+
+// ===== DETAIL =====
+function openDetail(id) {
+  const p = posts.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('detailCatLabel').textContent = `${CAT_EMOJI[p.cat]||''} ${p.cat}`;
+  const imgHtml = p.images && p.images.length > 0
+    ? `<img src="${p.images[0]}" style="width:100%;max-height:240px;object-fit:cover;">`
+    : `<div class="detail-img-placeholder">${CAT_EMOJI[p.cat]||'📦'}</div>`;
+
+  const galleryHtml = p.images && p.images.length > 1
+    ? `<div class="detail-img-gallery">${p.images.slice(1).map(src => `<img src="${src}">`).join('')}</div>`
+    : '';
+
+  const fileHtml = p.files && p.files.length
+    ? `<div style="font-size:12px;color:var(--text2);margin-bottom:12px;">📎 ${p.files.map(escHtml).join(', ')}</div>`
+    : '';
+
+  document.getElementById('detailContent').innerHTML = `
+    ${imgHtml}
+    <div class="detail-body">
+      <div class="detail-tags">
+        <span class="tag tag-cat">${CAT_EMOJI[p.cat]||''} ${p.cat}</span>
+        ${p.resolved ? '<span class="tag tag-found">✓ 찾았어요</span>' : '<span class="tag tag-lost">분실중</span>'}
+      </div>
+      <div class="detail-title">${escHtml(p.title)}</div>
+      <div class="detail-meta"><strong>${escHtml(p.author)}</strong> · ${p.date}</div>
+      ${p.desc ? `<div class="detail-desc">${escHtml(p.desc).replace(/\n/g,'<br>')}</div>` : ''}
+      ${galleryHtml}
+      ${fileHtml}
+      <button class="resolve-btn ${p.resolved ? 'resolved-state':''}" onclick="toggleResolve(${p.id})">
+        ${p.resolved ? '✓ 찾았어요 (취소하기)' : '✅ 찾았어요! 해결됨으로 표시'}
+      </button>
+    </div>
+  `;
+  document.getElementById('detailModal').classList.add('show');
+}
+
+function closeDetail() {
+  document.getElementById('detailModal').classList.remove('show');
+}
+
+function toggleResolve(id) {
+  const p = posts.find(x => x.id === id);
+  if (!p) return;
+  p.resolved = !p.resolved;
+  savePosts();
+  closeDetail();
+  renderList(currentFilter);
+  showToast(p.resolved ? '해결됨으로 표시했어요!' : '다시 미해결로 변경했어요.');
+}
+
+// ===== NOTIF =====
+function openNotif() {
+  const list = document.getElementById('notifList');
+  document.getElementById('notifDot').style.display = 'none';
+
+  // Recent (within 7 days) unresolved
+  const recent = posts
+    .filter(p => !p.resolved && (Date.now() - p.ts) < 7 * 86400000)
+    .sort((a,b) => b.ts - a.ts);
+
+  if (recent.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div>🔕</div><p>새 알림이 없어요.</p></div>';
+  } else {
+    list.innerHTML = recent.map(p => `
+      <div class="notif-item notif-new" onclick="closeNotif();openDetail(${p.id})">
+        <div class="notif-icon">${CAT_EMOJI[p.cat]||'📦'}</div>
+        <div class="notif-text">
+          <div class="notif-title">${escHtml(p.title)}</div>
+          <div class="notif-sub">${escHtml(p.author)} · ${p.date} · ${p.cat}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('notifModal').classList.add('show');
+}
+
+function closeNotif() {
+  document.getElementById('notifModal').classList.remove('show');
+}
+
+// ===== CAT PAGE (from stats bar category click) =====
+function openCatPage(cat) {
+  const filtered = posts.filter(p => p.cat === cat).sort((a,b) => b.ts - a.ts);
+  document.getElementById('catPageTitle').textContent = `${CAT_EMOJI[cat]||''} ${cat}`;
+  const list = document.getElementById('catPostList');
+  const empty = document.getElementById('catEmptyState');
+  list.innerHTML = '';
+  if (filtered.length === 0) { empty.style.display = ''; }
+  else {
+    empty.style.display = 'none';
+    filtered.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'post-card' + (p.resolved ? ' resolved' : '');
+      card.onclick = () => { closeCatPage(); openDetail(p.id); };
+      card.innerHTML = `
+        <div class="post-img-area">${p.images&&p.images.length?`<img src="${p.images[0]}">`:(CAT_EMOJI[p.cat]||'📦')}</div>
+        <div class="post-content">
+          <div class="post-tags">
+            <span class="tag tag-cat">${CAT_EMOJI[p.cat]||''} ${p.cat}</span>
+            ${p.resolved?'<span class="tag tag-found">✓ 해결</span>':'<span class="tag tag-lost">미해결</span>'}
+          </div>
+          <div class="post-title">${escHtml(p.title)}</div>
+          <div class="post-meta"><span class="author">${escHtml(p.author)}</span><span class="sep">·</span><span>${p.date}</span></div>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  }
+  document.getElementById('catPage').classList.add('show');
+}
+
+function closeCatPage() {
+  document.getElementById('catPage').classList.remove('show');
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ===== CLOSE ON OVERLAY CLICK =====
+['writeModal','detailModal','notifModal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) {
+      if (id === 'writeModal') closeWrite();
+      else if (id === 'detailModal') closeDetail();
+      else closeNotif();
+    }
+  });
+});
+
+// ===== NOTIF DOT =====
+function checkNotifDot() {
+  const hasNew = posts.some(p => !p.resolved && (Date.now() - p.ts) < 7 * 86400000);
+  document.getElementById('notifDot').style.display = hasNew ? '' : 'none';
+}
+
+// ===== INIT =====
+renderList('all');
+checkNotifDot();
+</script>
+</body>
+</html>
