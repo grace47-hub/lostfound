@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>205 분실물 센터</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+/* =============================================
+   CSS VARIABLES & RESET
+   ============================================= */
+:root {
+  --bg:        #F7F6F3;
+  --surface:   #FFFFFF;
+  --surface2:  #F0EEE9;
+  --border:    #E4E1D9;
+  --border2:   #CCC9C0;
+  --text:      #18171A;
+  --text2:     #5C5A57;
+  --text3:     #9B9892;
+  --accent:    #E84545;      /* 빨간 포인트 */
+  --accent-soft: #FFF0F0;
+  --blue:      #2563EB;
+  --blue-soft: #EEF4FF;
+  --green:     #16A34A;
+  --green-soft:#F0FDF4;
+  --tag-bg:    #18171A;
+  --tag-text:  #F7F6F3;
+  --radius:    14px;
+  --radius-sm: 9px;
+  --shadow:    0 1px 4px rgba(0,0,0,.07), 0 0 0 1px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.10), 0 0 0 1px rgba(0,0,0,.05);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,.15);
+  --font: 'Noto Sans KR', sans-serif;
+  --max-w: 480px;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html { font-size: 16px; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  /* 모바일 앱처럼 최대 너비 제한 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 앱 래퍼 */
+#app {
+  width: 100%;
+  max-width: var(--max-w);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  position: relative;
+  overflow-x: hidden;
+}
+
+button { cursor: pointer; border: none; background: none; font-family: var(--font); }
+input, textarea { font-family: var(--font); }
+img { display: block; }
+
+/* =============================================
+   VIEWS (페이지 단위)
+   ============================================= */
+.view {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  animation: fadeIn .18s ease;
+}
+.view.active { display: flex; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* =============================================
+   HEADER (공통)
+   ============================================= */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--surface);
+  border-bottom: 1.5px solid var(--border);
+  height: 54px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.header-title {
+  flex: 1;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.3px;
+}
+
+/* 헤더 아이콘 버튼 */
+.hbtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  font-size: 17px;
+  transition: background .13s;
+  position: relative;
+  flex-shrink: 0;
+}
+.hbtn:hover { background: var(--surface2); }
+
+/* 알림 배지 */
+.notif-badge {
+  position: absolute;
+  top: 5px; right: 5px;
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  border: 1.5px solid var(--surface);
+  display: none;
+}
+.notif-badge.show { display: block; }
+
+/* 뒤로가기 버튼 */
+.back-btn {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text); font-size: 17px;
+  transition: background .13s;
+}
+.back-btn:hover { background: var(--surface2); }
+
+/* =============================================
+   ① 메인 화면
+   ============================================= */
+
+/* 카테고리 탭 바 */
+.cat-bar {
+  background: var(--surface);
+  border-bottom: 1.5px solid var(--border);
+  padding: 8px 12px;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+.cat-bar::-webkit-scrollbar { display: none; }
+
+.cat-chip {
+  flex-shrink: 0;
+  padding: 5px 11px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border2);
+  background: none;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text2);
+  white-space: nowrap;
+  transition: all .14s;
+}
+.cat-chip:hover { border-color: var(--text); color: var(--text); }
+.cat-chip.active {
+  background: var(--tag-bg);
+  border-color: var(--tag-bg);
+  color: #fff;
+}
+
+/* 피드 영역 */
+.feed {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 게시글 카드 */
+.post-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow .14s, transform .14s, border-color .14s;
+}
+.post-card:hover {
+  border-color: var(--border2);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+/* 카드 이미지 */
+.card-img {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  background: var(--surface2);
+}
+.card-img-placeholder {
+  width: 100%;
+  height: 190px;
+  background: var(--surface2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  color: var(--text3);
+}
+
+/* 카드 하단 내용 */
+.card-body { padding: 11px 13px 13px; }
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+.card-author {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text2);
+}
+.card-date {
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.card-text {
+  font-size: 13.5px;
+  color: var(--text);
+  line-height: 1.55;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 태그 */
+.tag-row { display: flex; gap: 5px; flex-wrap: wrap; }
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1px;
+}
+.tag-cat {
+  background: var(--tag-bg);
+  color: var(--tag-text);
+}
+.tag-new {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* 빈 상태 */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text3);
+  padding: 48px 24px;
+  text-align: center;
+}
+.empty-state i { font-size: 36px; opacity: .4; }
+.empty-state p { font-size: 13.5px; line-height: 1.6; }
+
+/* =============================================
+   ② 글쓰기 화면
+   ============================================= */
+.write-view {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  background: var(--surface);
+  animation: fadeIn .18s ease;
+}
+.write-view.active { display: flex; }
+
+.write-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* 작성자 행 */
+.author-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 6px;
+}
+.author-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.author-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  background: transparent;
+}
+.author-input::placeholder { color: var(--text3); }
+
+/* 카테고리 선택 행 */
+.cat-select-row {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cat-select-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border2);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  background: none;
+  transition: all .13s;
+}
+.cat-select-btn:hover { border-color: var(--text); color: var(--text); }
+.cat-select-btn.selected {
+  background: var(--tag-bg);
+  border-color: var(--tag-bg);
+  color: #fff;
+}
+
+/* 본문 텍스트에어리어 */
+.write-textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 260px;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--text);
+  background: transparent;
+  padding: 14px 0;
+}
+.write-textarea::placeholder { color: var(--text3); }
+
+/* 첨부 이미지 미리보기 */
+.attach-preview {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-bottom: 10px;
+}
+.preview-item {
+  position: relative;
+  width: 72px; height: 72px;
+  border-radius: 9px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.preview-item img { width: 100%; height: 100%; object-fit: cover; }
+.preview-remove {
+  position: absolute;
+  top: 2px; right: 2px;
+  width: 18px; height: 18px;
+  background: rgba(0,0,0,.55);
+  color: #fff;
+  border-radius: 50%;
+  border: none;
+  font-size: 9px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+
+/* 하단 툴바 */
+.write-toolbar {
+  border-top: 1.5px solid var(--border);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.toolbar-btn {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  color: var(--text2);
+  transition: background .13s, color .13s;
+}
+.toolbar-btn:hover { background: var(--surface2); color: var(--text); }
+
+.toolbar-spacer { flex: 1; }
+
+.submit-btn {
+  padding: 9px 20px;
+  background: var(--tag-bg);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: -.2px;
+  transition: background .13s, opacity .13s;
+}
+.submit-btn:hover { background: #333; }
+.submit-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+/* =============================================
+   ③ 최근 업데이트 화면
+   ============================================= */
+.recent-view {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  animation: fadeIn .18s ease;
+}
+.recent-view.active { display: flex; }
+
+/* =============================================
+   모달 (카테고리 선택)
+   ============================================= */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.38);
+  backdrop-filter: blur(3px);
+  z-index: 200;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+
+.modal-sheet {
+  width: 100%;
+  max-width: var(--max-w);
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  padding: 0 0 28px;
+  animation: sheetUp .22s cubic-bezier(.32,.72,0,1);
+}
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.modal-handle {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 6px;
+}
+.modal-handle span {
+  width: 34px; height: 4px;
+  background: var(--border2);
+  border-radius: 2px;
+}
+
+.modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  padding: 4px 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cat-modal-list {
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+}
+.cat-modal-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 6px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background .12s;
+}
+.cat-modal-item:last-child { border-bottom: none; }
+.cat-modal-item:hover { background: var(--surface2); }
+.cat-modal-item .cat-icon { font-size: 22px; width: 30px; text-align: center; }
+.cat-modal-item .cat-info { flex: 1; }
+.cat-modal-item .cat-info strong { font-size: 14px; font-weight: 600; display: block; }
+.cat-modal-item .cat-info small { font-size: 11px; color: var(--text3); }
+.cat-modal-item .check-icon { color: var(--green); font-size: 15px; display: none; }
+.cat-modal-item.selected .check-icon { display: block; }
+
+/* =============================================
+   상세보기 모달
+   ============================================= */
+.detail-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+.detail-overlay.show { display: flex; }
+
+.detail-sheet {
+  width: 100%;
+  max-width: var(--max-w);
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  max-height: 88vh;
+  overflow-y: auto;
+  animation: sheetUp .22s cubic-bezier(.32,.72,0,1);
+}
+
+.detail-close-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 12px 4px;
+}
+.detail-close {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  color: var(--text2);
+  transition: background .12s;
+}
+.detail-close:hover { background: var(--border); }
+
+.detail-imgs {
+  display: flex;
+  gap: 6px;
+  padding: 0 12px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.detail-imgs::-webkit-scrollbar { display: none; }
+.detail-imgs img {
+  height: 200px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+.detail-imgs .no-img {
+  width: 100%;
+  height: 160px;
+  background: var(--surface2);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 52px;
+  flex-shrink: 0;
+}
+
+.detail-body { padding: 0 14px 16px; }
+
+.detail-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.detail-author { font-size: 13px; font-weight: 600; color: var(--text2); }
+.detail-date   { font-size: 11.5px; color: var(--text3); }
+
+.detail-text {
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--text);
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+}
+
+.detail-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+
+/* =============================================
+   Toast
+   ============================================= */
+.toast {
+  position: fixed;
+  bottom: 88px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--tag-bg);
+  color: #fff;
+  padding: 9px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  transition: all .25s;
+  pointer-events: none;
+  z-index: 999;
+  white-space: nowrap;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* =============================================
+   파일명 표시
+   ============================================= */
+.file-names {
+  font-size: 11.5px;
+  color: var(--text3);
+  padding: 0 0 8px;
+}
+
+/* =============================================
+   반응형 — 데스크탑에서 중앙 정렬 효과
+   ============================================= */
+@media (min-width: 520px) {
+  body { background: #ECEAE4; }
+  #app { box-shadow: 0 0 0 1px rgba(0,0,0,.07), 0 8px 40px rgba(0,0,0,.12); }
+  .modal-sheet, .detail-sheet { border-radius: 20px 20px 0 0; }
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ================================================
+       ① 메인 화면 (#view-main)
+       ================================================ -->
+  <section class="view active" id="view-main">
+
+    <!-- 헤더 -->
+    <header class="header">
+      <!-- 좌: 알림(종) 아이콘 -->
+      <button class="hbtn" id="btn-notif" onclick="goRecent()" title="최근 업데이트">
+        <i class="fa-regular fa-bell"></i>
+        <span class="notif-badge" id="notif-badge"></span>
+      </button>
+
+      <div class="header-title">205 분실물</div>
+
+      <!-- 우: 글쓰기 아이콘 -->
+      <button class="hbtn" onclick="goWrite()" title="글쓰기">
+        <i class="fa-regular fa-pen-to-square"></i>
+      </button>
+    </header>
+
+    <!-- 카테고리 탭 바 -->
+    <div class="cat-bar" id="cat-bar">
+      <button class="cat-chip active" data-cat="all" onclick="filterCat('all', this)">전체</button>
+      <button class="cat-chip" data-cat="필기구"   onclick="filterCat('필기구', this)">#필기구</button>
+      <button class="cat-chip" data-cat="문구류"   onclick="filterCat('문구류', this)">#문구류</button>
+      <button class="cat-chip" data-cat="텀블러"   onclick="filterCat('텀블러', this)">#텀블러</button>
+      <button class="cat-chip" data-cat="안경"     onclick="filterCat('안경', this)">#안경</button>
+      <button class="cat-chip" data-cat="전자기기" onclick="filterCat('전자기기', this)">#전자기기</button>
+      <button class="cat-chip" data-cat="기타"     onclick="filterCat('기타', this)">#기타</button>
+    </div>
+
+    <!-- 피드 (게시글 리스트) -->
+    <div class="feed" id="feed-main"></div>
+
+  </section><!-- /view-main -->
+
+
+  <!-- ================================================
+       ② 글쓰기 화면 (#view-write)
+       ================================================ -->
+  <section class="write-view" id="view-write">
+
+    <!-- 헤더 -->
+    <header class="header">
+      <button class="back-btn" onclick="goMain()" title="뒤로">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <div class="header-title">글쓰기</div>
+      <div style="width:38px"></div><!-- 균형 맞추기 -->
+    </header>
+
+    <!-- 본문 영역 -->
+    <div class="write-body" id="write-body">
+
+      <!-- 작성자 입력 -->
+      <div class="author-row">
+        <span class="author-label">작성자 :</span>
+        <input class="author-input" id="write-author"
+               type="text" placeholder="이름을 입력하세요" maxlength="12">
+      </div>
+
+      <!-- 카테고리 선택 -->
+      <div class="cat-select-row">
+        <button class="cat-select-btn" id="cat-select-btn" onclick="openCatModal()">
+          <i class="fa-solid fa-hashtag" style="font-size:12px"></i>
+          <span id="cat-select-label">카테고리 선택하기</span>
+          <i class="fa-solid fa-chevron-down" style="font-size:10px;opacity:.5"></i>
+        </button>
+      </div>
+
+      <!-- 본문 텍스트에어리어 -->
+      <textarea class="write-textarea" id="write-body-text"
+                placeholder="여기에 글을 작성해주세요. 내용은 없어도 되는데 그냥 글 쓸 수 있는 칸으로!"></textarea>
+
+      <!-- 첨부 이미지 미리보기 -->
+      <div class="attach-preview" id="attach-preview"></div>
+
+      <!-- 첨부 파일명 표시 -->
+      <div class="file-names" id="file-names"></div>
+
+    </div>
+
+    <!-- 하단 툴바 (카메라 / 갤러리 / 파일) -->
+    <div class="write-toolbar">
+
+      <!-- 카메라 (모바일 카메라 직접 촬영) -->
+      <button class="toolbar-btn" onclick="document.getElementById('input-camera').click()" title="카메라 찍기">
+        <i class="fa-solid fa-camera"></i>
+      </button>
+      <input type="file" id="input-camera" accept="image/*" capture="environment" multiple
+             onchange="handleImages(this)" style="display:none">
+
+      <!-- 갤러리 / 이미지 -->
+      <button class="toolbar-btn" onclick="document.getElementById('input-gallery').click()" title="이미지 첨부">
+        <i class="fa-regular fa-image"></i>
+      </button>
+      <input type="file" id="input-gallery" accept="image/*" multiple
+             onchange="handleImages(this)" style="display:none">
+
+      <!-- 파일 첨부 -->
+      <button class="toolbar-btn" onclick="document.getElementById('input-file').click()" title="파일 첨부">
+        <i class="fa-solid fa-paperclip"></i>
+      </button>
+      <input type="file" id="input-file" multiple
+             onchange="handleFiles(this)" style="display:none">
+
+      <div class="toolbar-spacer"></div>
+
+      <!-- 등록 버튼 -->
+      <button class="submit-btn" id="submit-btn" onclick="submitPost()">등록</button>
+    </div>
+
+  </section><!-- /view-write -->
+
+
+  <!-- ================================================
+       ③ 최근 업데이트 화면 (#view-recent)
+       ================================================ -->
+  <section class="recent-view" id="view-recent">
+
+    <!-- 헤더 -->
+    <header class="header">
+      <button class="back-btn" onclick="goMain()" title="뒤로">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <div class="header-title">최근 업데이트</div>
+      <div style="width:38px"></div>
+    </header>
+
+    <!-- 피드 (1개월 이내 글) -->
+    <div class="feed" id="feed-recent"></div>
+
+  </section><!-- /view-recent -->
+
+</div><!-- /app -->
+
+
+<!-- ================================================
+     카테고리 선택 모달
+     ================================================ -->
+<div class="modal-overlay" id="cat-modal" onclick="closeCatModal(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"><span></span></div>
+    <div class="modal-title">카테고리 선택</div>
+    <div class="cat-modal-list" id="cat-modal-list">
+      <!-- JS 로 동적 생성 -->
+    </div>
+  </div>
+</div>
+
+
+<!-- ================================================
+     상세보기 모달
+     ================================================ -->
+<div class="detail-overlay" id="detail-overlay" onclick="closeDetail(event)">
+  <div class="detail-sheet" onclick="event.stopPropagation()">
+    <div class="detail-close-row">
+      <button class="detail-close" onclick="closeDetail()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <!-- 이미지 갤러리 -->
+    <div class="detail-imgs" id="detail-imgs"></div>
+    <!-- 본문 -->
+    <div class="detail-body">
+      <div class="detail-meta">
+        <span class="detail-author" id="detail-author"></span>
+        <span class="detail-date"   id="detail-date"></span>
+      </div>
+      <p class="detail-text" id="detail-text"></p>
+      <div class="detail-tags" id="detail-tags"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+
+<!-- ================================================
+     JAVASCRIPT
+     ================================================ -->
+<script>
+/* ─────────────────────────────────────────────────
+   상수 & 카테고리 정의
+───────────────────────────────────────────────── */
+const CATS = [
+  { id: '필기구',   icon: '✏️',  desc: '연필, 샤프, 지우개, 필통, 펜 등' },
+  { id: '문구류',   icon: '✂️',  desc: '가위, 테이프, 풀 등' },
+  { id: '텀블러',   icon: '🥤',  desc: '개인 텀블러, 보온병 등' },
+  { id: '안경',     icon: '👓',  desc: '안경, 선글라스 등' },
+  { id: '전자기기', icon: '🔋',  desc: '이어버즈, 보조배터리, 충전기, S펜/애플펜슬 등' },
+  { id: '기타',     icon: '📦',  desc: '위 항목에 해당되지 않는 기타' },
+];
+
+const CAT_ICON = Object.fromEntries(CATS.map(c => [c.id, c.icon]));
+
+/* 1개월 = 30일 */
+const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+
+/* ─────────────────────────────────────────────────
+   State
+───────────────────────────────────────────────── */
+let posts        = [];          // 전체 게시글
+let currentCat   = 'all';       // 현재 필터 카테고리
+let selectedCat  = '';          // 글쓰기 선택 카테고리
+let pendingImages = [];         // base64 이미지 배열
+let pendingFiles  = [];         // 파일명 배열
+let lastVisitRecent = 0;        // 최근 업데이트 마지막 방문 시각
+
+/* ─────────────────────────────────────────────────
+   localStorage 헬퍼
+───────────────────────────────────────────────── */
+function loadData() {
+  try {
+    posts = JSON.parse(localStorage.getItem('205_posts') || '[]');
+    lastVisitRecent = parseInt(localStorage.getItem('205_last_visit') || '0');
+  } catch(e) { posts = []; }
+}
+
+function saveData() {
+  // 이미지는 용량이 커서 base64 그대로 저장 (localStorage 한계 ~5MB 주의)
+  try {
+    localStorage.setItem('205_posts', JSON.stringify(posts));
+  } catch(e) {
+    showToast('저장 공간이 부족해요. 이미지 없이 저장됩니다.');
+    const noPic = posts.map(p => ({...p, images:[]}));
+    localStorage.setItem('205_posts', JSON.stringify(noPic));
+  }
+}
+
+function saveLastVisit() {
+  lastVisitRecent = Date.now();
+  localStorage.setItem('205_last_visit', String(lastVisitRecent));
+}
+
+/* ─────────────────────────────────────────────────
+   샘플 데이터 (처음 실행 시)
+───────────────────────────────────────────────── */
+function seedData() {
+  if (posts.length > 0) return;
+  const now = Date.now();
+  posts = [
+    {
+      id: now - 86400000 * 3,
+      author: '이지우',
+      cat: '필기구',
+      text: '파란색 모나미 볼펜 잃어버렸어요. 이름표 없는 거라 찾기 어렵지만 혹시 보신 분 연락 주세요!',
+      images: [],
+      files: [],
+      ts: now - 86400000 * 3,
+    },
+    {
+      id: now - 86400000 * 1,
+      author: '박준서',
+      cat: '전자기기',
+      text: '에어팟 잃어버렸습니다 ㅠㅠ 흰색 케이스에 오른쪽에 살짝 긁힌 자국 있어요. 찾으시면 꼭 연락 부탁드려요.',
+      images: [],
+      files: [],
+      ts: now - 86400000 * 1,
+    },
+    {
+      id: now - 3600000 * 2,
+      author: '한소율',
+      cat: '텀블러',
+      text: '민트색 스탠리 텀블러 어디 두고 왔어요. 스티커 몇 개 붙어 있어요.',
+      images: [],
+      files: [],
+      ts: now - 3600000 * 2,
+    },
+  ];
+  saveData();
+}
+
+/* ─────────────────────────────────────────────────
+   유틸
+───────────────────────────────────────────────── */
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDate(ts) {
+  const d = new Date(ts);
+  const yy = String(d.getFullYear()).slice(2);
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${yy}.${mm}.${dd}`;
+}
+
+function isRecent(ts) {
+  return (Date.now() - ts) < ONE_MONTH_MS;
+}
+
+/* ─────────────────────────────────────────────────
+   알림 배지
+───────────────────────────────────────────────── */
+function updateBadge() {
+  // lastVisitRecent 이후에 등록된 게시글이 있으면 배지 표시
+  const hasNew = posts.some(p => p.ts > lastVisitRecent);
+  const badge = document.getElementById('notif-badge');
+  badge.classList.toggle('show', hasNew);
+}
+
+/* ─────────────────────────────────────────────────
+   카테고리 모달 생성
+───────────────────────────────────────────────── */
+function buildCatModal() {
+  const list = document.getElementById('cat-modal-list');
+  list.innerHTML = CATS.map(c => `
+    <div class="cat-modal-item" data-cat="${c.id}" onclick="pickCat('${c.id}')">
+      <span class="cat-icon">${c.icon}</span>
+      <span class="cat-info">
+        <strong>${c.id}</strong>
+        <small>${c.desc}</small>
+      </span>
+      <i class="fa-solid fa-check check-icon"></i>
+    </div>
+  `).join('');
+}
+
+function openCatModal() {
+  // 기존 선택 표시
+  document.querySelectorAll('.cat-modal-item').forEach(el => {
+    el.classList.toggle('selected', el.dataset.cat === selectedCat);
+  });
+  document.getElementById('cat-modal').classList.add('show');
+}
+
+function closeCatModal(e) {
+  if (!e || e.target === document.getElementById('cat-modal')) {
+    document.getElementById('cat-modal').classList.remove('show');
+  }
+}
+
+function pickCat(cat) {
+  selectedCat = cat;
+  // 버튼 텍스트 + 스타일 업데이트
+  const btn   = document.getElementById('cat-select-btn');
+  const label = document.getElementById('cat-select-label');
+  label.textContent = `${CAT_ICON[cat]} ${cat}`;
+  btn.classList.add('selected');
+  closeCatModal({target: document.getElementById('cat-modal')});
+}
+
+/* ─────────────────────────────────────────────────
+   피드 렌더링
+───────────────────────────────────────────────── */
+/**
+ * @param {HTMLElement} container - 피드를 그릴 요소
+ * @param {Array} items - 게시글 배열
+ */
+function renderFeed(container, items) {
+  if (items.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="fa-regular fa-folder-open"></i>
+        <p>게시글이 없어요.<br>분실물을 등록해 주세요!</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = items.map(p => {
+    const imgHtml = p.images && p.images.length > 0
+      ? `<img class="card-img" src="${p.images[0]}" alt="분실물 이미지" loading="lazy">`
+      : `<div class="card-img-placeholder">${CAT_ICON[p.cat] || '📦'}</div>`;
+
+    const newBadge = isRecent(p.ts) ? `<span class="tag tag-new">NEW</span>` : '';
+
+    return `
+      <div class="post-card" onclick="openDetail(${p.id})">
+        ${imgHtml}
+        <div class="card-body">
+          <div class="card-meta">
+            <span class="card-author">${esc(p.author)}</span>
+            <span class="card-date">${fmtDate(p.ts)}</span>
+          </div>
+          ${p.text ? `<p class="card-text">${esc(p.text)}</p>` : ''}
+          <div class="tag-row">
+            <span class="tag tag-cat">${CAT_ICON[p.cat]||''} #${esc(p.cat)}</span>
+            ${newBadge}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ─────────────────────────────────────────────────
+   카테고리 필터
+───────────────────────────────────────────────── */
+function filterCat(cat, btn) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  const filtered = cat === 'all'
+    ? [...posts].sort((a,b) => b.ts - a.ts)
+    : posts.filter(p => p.cat === cat).sort((a,b) => b.ts - a.ts);
+
+  renderFeed(document.getElementById('feed-main'), filtered);
+}
+
+/* ─────────────────────────────────────────────────
+   뷰 전환
+───────────────────────────────────────────────── */
+function showView(id) {
+  // 모든 view / write-view / recent-view 숨기기
+  document.querySelectorAll('.view, .write-view, .recent-view').forEach(v => {
+    v.classList.remove('active');
+  });
+  document.getElementById(id).classList.add('active');
+}
+
+function goMain() {
+  showView('view-main');
+  filterCat(currentCat, document.querySelector(`.cat-chip[data-cat="${currentCat}"]`));
+  updateBadge();
+}
+
+function goWrite() {
+  // 폼 초기화
+  resetWriteForm();
+  showView('view-write');
+}
+
+function goRecent() {
+  // 최근 업데이트 방문 → 배지 제거
+  saveLastVisit();
+  document.getElementById('notif-badge').classList.remove('show');
+
+  // 1개월 이내 글만 최신순
+  const recent = posts
+    .filter(p => isRecent(p.ts))
+    .sort((a,b) => b.ts - a.ts);
+
+  renderFeed(document.getElementById('feed-recent'), recent);
+  showView('view-recent');
+}
+
+/* ─────────────────────────────────────────────────
+   이미지 / 파일 첨부
+───────────────────────────────────────────────── */
+function handleImages(input) {
+  const files = Array.from(input.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      pendingImages.push(e.target.result);
+      renderPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';   // 같은 파일 재선택 허용
+}
+
+function handleFiles(input) {
+  pendingFiles = [...pendingFiles, ...Array.from(input.files).map(f => f.name)];
+  renderFileNames();
+  input.value = '';
+}
+
+function renderPreview() {
+  const box = document.getElementById('attach-preview');
+  box.innerHTML = pendingImages.map((src, i) => `
+    <div class="preview-item">
+      <img src="${src}" alt="">
+      <button class="preview-remove" onclick="removeImg(${i})">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+  `).join('');
+}
+
+function removeImg(i) {
+  pendingImages.splice(i, 1);
+  renderPreview();
+}
+
+function renderFileNames() {
+  const el = document.getElementById('file-names');
+  el.textContent = pendingFiles.length
+    ? '📎 ' + pendingFiles.join(', ')
+    : '';
+}
+
+/* ─────────────────────────────────────────────────
+   글 등록
+───────────────────────────────────────────────── */
+function submitPost() {
+  const author = document.getElementById('write-author').value.trim();
+  const text   = document.getElementById('write-body-text').value.trim();
+
+  // 유효성 검사
+  if (!author)      { showToast('작성자 이름을 입력해 주세요.'); return; }
+  if (!selectedCat) { showToast('카테고리를 선택해 주세요.'); return; }
+
+  const now = Date.now();
+  const post = {
+    id:     now,
+    author: author,
+    cat:    selectedCat,
+    text:   text,
+    images: [...pendingImages],
+    files:  [...pendingFiles],
+    ts:     now,
+  };
+
+  posts.unshift(post);
+  saveData();
+  showToast('게시글이 등록되었습니다!');
+  goMain();
+}
+
+function resetWriteForm() {
+  document.getElementById('write-author').value    = '';
+  document.getElementById('write-body-text').value = '';
+  selectedCat    = '';
+  pendingImages  = [];
+  pendingFiles   = [];
+  const btn   = document.getElementById('cat-select-btn');
+  const label = document.getElementById('cat-select-label');
+  label.textContent = '카테고리 선택하기';
+  btn.classList.remove('selected');
+  renderPreview();
+  renderFileNames();
+}
+
+/* ─────────────────────────────────────────────────
+   상세보기 모달
+───────────────────────────────────────────────── */
+function openDetail(id) {
+  const p = posts.find(x => x.id === id);
+  if (!p) return;
+
+  // 이미지
+  const imgBox = document.getElementById('detail-imgs');
+  if (p.images && p.images.length > 0) {
+    imgBox.innerHTML = p.images.map(src =>
+      `<img src="${src}" alt="분실물 이미지">`
+    ).join('');
+  } else {
+    imgBox.innerHTML = `<div class="no-img">${CAT_ICON[p.cat]||'📦'}</div>`;
+  }
+
+  document.getElementById('detail-author').textContent = p.author;
+  document.getElementById('detail-date').textContent   = fmtDate(p.ts);
+  document.getElementById('detail-text').textContent   = p.text || '';
+
+  const tagsEl = document.getElementById('detail-tags');
+  tagsEl.innerHTML = `<span class="tag tag-cat">${CAT_ICON[p.cat]||''} #${esc(p.cat)}</span>`;
+  if (p.files && p.files.length) {
+    tagsEl.innerHTML += `<span style="font-size:11.5px;color:var(--text3);align-self:center;">📎 ${p.files.map(esc).join(', ')}</span>`;
+  }
+
+  document.getElementById('detail-overlay').classList.add('show');
+}
+
+function closeDetail(e) {
+  if (!e || e.target === document.getElementById('detail-overlay')) {
+    document.getElementById('detail-overlay').classList.remove('show');
+  }
+}
+
+/* ─────────────────────────────────────────────────
+   Toast
+───────────────────────────────────────────────── */
+let toastTimer;
+function showToast(msg) {
+  clearTimeout(toastTimer);
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+/* ─────────────────────────────────────────────────
+   초기화
+───────────────────────────────────────────────── */
+(function init() {
+  loadData();
+  seedData();
+  buildCatModal();
+  filterCat('all', document.querySelector('.cat-chip[data-cat="all"]'));
+  updateBadge();
+})();
+</script>
+
+</body>
+</html>
